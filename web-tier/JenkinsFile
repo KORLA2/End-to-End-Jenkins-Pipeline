@@ -1,0 +1,54 @@
+pipeline{
+agent any
+environment{
+    DOCKER_HUB_CRED='docker-cred'
+    GIT_HUB_CRED='githubtoken' 
+}
+
+stages{
+    stage('clean workspace'){
+        steps{
+
+        /* Clean WS*/
+        cleanWS()
+        }
+    }
+    stage('git checkout'){
+        steps{
+    git credentialsId: '${GIT_HUB_CRED}', 
+    url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git',
+    branch:'frontend'
+
+        }
+        stage('Build Image'){
+          steps {
+              sh" docker build -t goutham2/frontend:${BUILD_NUMBER} ."
+            }
+        }
+
+     stage('Push Image'){
+        steps{
+
+        withCredentials([usernamePassword(credentialsId: 'docker-cred', passwordVariable: 'pass', usernameVariable: 'user')]) {
+    // some block
+        sh "docker login -u $user --password $pass"
+        sh "docker push goutham2/frontend:${BUILD_NUMBER}"
+
+        }
+        }
+
+        }
+     stage('Delete Image'){
+        steps{
+
+        sh "docker rmi goutham2/frontend:${BUILD_NUMBER}"
+
+        }
+
+        }
+    //    stage('Trigger Frontend CD'){
+
+    //    }
+
+    }
+}

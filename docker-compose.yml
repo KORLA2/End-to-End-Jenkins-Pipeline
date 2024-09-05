@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:latest
+    container_name: my-mysql-container
+    environment:
+      MYSQL_ROOT_PASSWORD: my-secret-pw
+      MYSQL_HOST: mysql
+      MYSQL_DATABASE: webappdb
+      MYSQL_USER: goutham
+      MYSQL_PASSWORD: Goutham
+    ports:
+      - "4406:3306"
+    volumes:
+      - ./mysql-data:/var/lib/mysql
+      - ./initdb.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+
+  backend:
+    build:
+      context: ./app-tier  # Path to the backend directory
+      dockerfile: Dockerfile  # Name of the Dockerfile (optional if named Dockerfile)
+    container_name: my-backend
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_USER: goutham
+      MYSQL_PASSWORD: Goutham
+      MYSQL_DATABASE: webappdb
+    ports:
+      - "5000:4000"
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./web-tier  # Path to the frontend directory
+      dockerfile: Dockerfile  # Name of the Dockerfile (optional if named Dockerfile)
+    container_name: my-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+volumes:
+  mysql-data:
+
+networks:
+  app-network:
+    driver: bridge
