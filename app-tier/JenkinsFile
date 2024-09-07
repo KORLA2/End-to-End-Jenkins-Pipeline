@@ -1,55 +1,73 @@
-pipeline{
-agent any
-environment{
-    DOCKER_HUB_CRED='docker-cred'
-    GIT_HUB_CRED='githubtoken' 
-}
-
-stages{
-    stage('clean workspace'){
-        steps{
-
-        /* Clean WS*/
-        cleanWS()
-        }
+pipeline {
+    agent any
+    environment {
+        DOCKER_HUB_CRED = 'docker-cred'
+        GIT_HUB_CRED = 'githubtoken'
     }
-    stage('git checkout'){
-        steps{
-    git credentialsId: '${GIT_HUB_CRED}', 
-    url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git',
-    branch:'backend'
 
-        }
-        stage('Build Image'){
-          steps {
-              sh" docker build -t goutham2/backend:${BUILD_NUMBER} ."
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                /* Clean workspace */
+                cleanWs()
             }
         }
+        stage('Git Checkout') {
+            steps {
+                git credentialsId: GIT_HUB_CRED, 
+                url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git',
+                branch:'main'
+            }
+        }
+ stage('Determine Changes') {
+            steps {
+                script {
+                    def changes = sh(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim()
+                    echo "Detected changes: ${changes}"
 
-     stage('Push Image'){
-        steps{
-
-        withCredentials([usernamePassword(credentialsId: 'docker-cred', passwordVariable: 'pass', usernameVariable: 'user')]) {
-    // some block
-        sh "docker login -u $user --password $pass"
-        sh "docker push goutham2/backend:${BUILD_NUMBER}"
-
+                    if (changes.contains('app-tier/')) {
+                        currentBuild.description = 'Backend changes detected'
+                       currentBuild.result = 'SUCCESS'
+                    }  else {
+                        echo 'No relevant Frontend changes detected.'
+                        
+                        return
+                    }
+                }
+            }
+        }
+stages{
+ when{
+    expression{
+        currentBuild.result=='SUCCESS'
+        }
+ }
+        stage('Build Image') {
+            steps {
+            dir('web-tier'){
+                sh "docker build -t goutham2/backend:${BUILD_NUMBER} ."
+            }
         }
         }
-
+        stage('Push Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CRED, passwordVariable: 'pass', usernameVariable: 'user')]) {
+                    sh "docker login -u $user --password $pass"
+                    sh "docker push goutham2/backend:${BUILD_NUMBER}"
+                }
+            }
         }
-         stage('Delete Image'){
-        steps{
-
-        sh "docker rmi goutham2/backend:${BUILD_NUMBER}"
-
+        stage('Delete Image') {
+            steps {
+                sh "docker rmi goutham2/backend:${BUILD_NUMBER}"
+            }
         }
+    }
+}
 
+    post {
+        always {
+            cleanWs()  // Clean workspace after the pipeline execution
         }
-
-    //    stage('Trigger Backend CD'){
-
-    //    }
-
     }
 }
