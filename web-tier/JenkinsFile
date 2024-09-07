@@ -21,8 +21,10 @@ pipeline {
         }
         stage('Build Image') {
             steps {
+            dir('web-tier'){
                 sh "docker build -t goutham2/frontend:${BUILD_NUMBER} ."
             }
+        }
         }
         stage('Push Image') {
             steps {
