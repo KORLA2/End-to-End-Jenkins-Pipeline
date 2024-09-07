@@ -8,62 +8,65 @@ pipeline {
     stages {
         stage('Clean Workspace') {
             steps {
-                /* Clean workspace */
                 cleanWs()
             }
         }
+
         stage('Git Checkout') {
             steps {
-                git credentialsId: GIT_HUB_CRED, 
-                url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git',
-                branch:'main'
+                git credentialsId: GIT_HUB_CRED, url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git', branch: 'main'
             }
         }
- stage('Determine Changes') {
+
+        stage('Determine Changes') {
             steps {
                 script {
                     def changes = sh(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim()
                     echo "Detected changes: ${changes}"
 
                     if (changes.contains('web-tier/')) {
-                        currentBuild.description = 'Backend changes detected'
-                       currentBuild.result = 'SUCCESS'
-                    }  else {
-                        echo 'No relevant Backend changes detected.'
-                        
-                        return
+                        currentBuild.description = 'backend changes detected'
+                        env.backend_CHANGED = 'true'
+                    } else {
+                        echo 'No relevant backend changes detected.'
+                        env.backend_CHANGED = 'false'
                     }
                 }
             }
         }
-stages{
- when{
-    expression{
-        currentBuild.result=='SUCCESS'
-        }
- }
-        stage('Build Image') {
-            steps {
-            dir('web-tier'){
-                sh "docker build -t goutham2/backend:${BUILD_NUMBER} ."
+
+        stage('Build and Deploy') {
+            when {
+                expression {
+                    return env.backend_CHANGED == 'true'
+                }
             }
-        }
-        }
-        stage('Push Image') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CRED, passwordVariable: 'pass', usernameVariable: 'user')]) {
-                    sh "docker login -u $user --password $pass"
-                    sh "docker push goutham2/backend:${BUILD_NUMBER}"
+            stages {
+                stage('Build Image') {
+                    steps {
+                        dir('web-tier') {
+                            sh "docker build -t goutham2/backend:${BUILD_NUMBER} ."
+                        }
+                    }
+                }
+
+                stage('Push Image') {
+                    steps {
+                        withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CRED, passwordVariable: 'pass', usernameVariable: 'user')]) {
+                            sh "docker login -u $user --password $pass"
+                            sh "docker push goutham2/backend:${BUILD_NUMBER}"
+                        }
+                    }
+                }
+
+                stage('Delete Image') {
+                    steps {
+                        sh "docker rmi goutham2/backend:${BUILD_NUMBER}"
+                    }
                 }
             }
         }
-        stage('Delete Image') {
-            steps {
-                sh "docker rmi goutham2/backend:${BUILD_NUMBER}"
-            }
-        }
     }
-}
 
     post {
         always {
