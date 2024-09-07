@@ -15,7 +15,7 @@ stages{
     }
     stage('git checkout'){
         steps{
-    git credentialsId: '${GIT_HUB_CRED}', 
+    git credentialsId: GIT_HUB_CRED, 
     url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git'
  
         }
@@ -46,10 +46,13 @@ stages{
         }
 
         }
-    //    stage('Trigger Frontend CD'){
+  
 
-    //    }
-
+    }
+  post {
+        always {
+            cleanWS()  // Clean workspace after the pipeline execution
+        }
     }
 }
 
