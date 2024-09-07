@@ -19,6 +19,22 @@ pipeline {
                 branch:'main'
             }
         }
+ stage('Determine Changes') {
+            steps {
+                script {
+                    def changes = sh(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim()
+                    echo "Detected changes: ${changes}"
+
+                    if (changes.contains('web-tier/')) {
+                        currentBuild.description = 'Frontend changes detected'
+                    }  else {
+                        echo 'No relevant Frontend changes detected.'
+                        currentBuild.result = 'SUCCESS'
+                        return
+                    }
+                }
+            }
+        }
         stage('Build Image') {
             steps {
             dir('web-tier'){
