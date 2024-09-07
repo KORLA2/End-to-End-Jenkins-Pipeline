@@ -27,14 +27,21 @@ pipeline {
 
                     if (changes.contains('web-tier/')) {
                         currentBuild.description = 'Frontend changes detected'
+                       currentBuild.result = 'SUCCESS'
                     }  else {
                         echo 'No relevant Frontend changes detected.'
-                        currentBuild.result = 'SUCCESS'
+                        
                         return
                     }
                 }
             }
         }
+stages{
+ when{
+    expression{
+        currentBuild.result=='SUCCESS'
+        }
+ }
         stage('Build Image') {
             steps {
             dir('web-tier'){
@@ -56,6 +63,7 @@ pipeline {
             }
         }
     }
+}
 
     post {
         always {
