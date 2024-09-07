@@ -9,7 +9,7 @@ pipeline {
         stage('Clean Workspace') {
             steps {
                 /* Clean workspace */
-                cleanWS()
+                cleanWs()
             }
         }
         stage('Git Checkout') {
@@ -40,7 +40,7 @@ pipeline {
 
     post {
         always {
-            cleanWS()  // Clean workspace after the pipeline execution
+            cleanWs()  // Clean workspace after the pipeline execution
         }
     }
 }
