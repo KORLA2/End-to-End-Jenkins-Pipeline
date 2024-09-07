@@ -25,11 +25,11 @@ pipeline {
                     def changes = sh(script: 'git diff --name-only HEAD~1 HEAD', returnStdout: true).trim()
                     echo "Detected changes: ${changes}"
 
-                    if (changes.contains('app-tier/')) {
+                    if (changes.contains('web-tier/')) {
                         currentBuild.description = 'Backend changes detected'
                        currentBuild.result = 'SUCCESS'
                     }  else {
-                        echo 'No relevant Frontend changes detected.'
+                        echo 'No relevant Backend changes detected.'
                         
                         return
                     }
