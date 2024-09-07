@@ -16,7 +16,7 @@ stages{
     stage('git checkout'){
         steps{
     git credentialsId: '${GIT_HUB_CRED}', 
-    url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git',
+    url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git'
  
         }
         stage('Build Image'){
