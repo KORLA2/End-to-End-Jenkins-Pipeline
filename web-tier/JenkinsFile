@@ -1,58 +1,46 @@
-pipeline{
-agent any
-environment{
-    DOCKER_HUB_CRED='docker-cred'
-    GIT_HUB_CRED='githubtoken' 
-}
-
-stages{
-    stage('clean workspace'){
-        steps{
-
-        /* Clean WS*/
-        cleanWS()
-        }
+pipeline {
+    agent any
+    environment {
+        DOCKER_HUB_CRED = 'docker-cred'
+        GIT_HUB_CRED = 'githubtoken'
     }
-    stage('git checkout'){
-        steps{
-    git credentialsId: GIT_HUB_CRED, 
-    url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git'
- 
-        }
-}
-        stage('Build Image'){
-          steps {
-              sh" docker build -t goutham2/frontend:${BUILD_NUMBER} ."
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                /* Clean workspace */
+                cleanWS()
             }
         }
-
-     stage('Push Image'){
-        steps{
-
-        withCredentials([usernamePassword(credentialsId: 'docker-cred', passwordVariable: 'pass', usernameVariable: 'user')]) {
-    // some block
-        sh "docker login -u $user --password $pass"
-        sh "docker push goutham2/frontend:${BUILD_NUMBER}"
-
+        stage('Git Checkout') {
+            steps {
+                git credentialsId: GIT_HUB_CRED, 
+                    url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git'
+            }
         }
+        stage('Build Image') {
+            steps {
+                sh "docker build -t goutham2/frontend:${BUILD_NUMBER} ."
+            }
         }
-
+        stage('Push Image') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: DOCKER_HUB_CRED, passwordVariable: 'pass', usernameVariable: 'user')]) {
+                    sh "docker login -u $user --password $pass"
+                    sh "docker push goutham2/frontend:${BUILD_NUMBER}"
+                }
+            }
         }
-     stage('Delete Image'){
-        steps{
-
-        sh "docker rmi goutham2/frontend:${BUILD_NUMBER}"
-
+        stage('Delete Image') {
+            steps {
+                sh "docker rmi goutham2/frontend:${BUILD_NUMBER}"
+            }
         }
-
-        }
-  
-
     }
-  post {
+
+    post {
         always {
             cleanWS()  // Clean workspace after the pipeline execution
         }
     }
 }
-
