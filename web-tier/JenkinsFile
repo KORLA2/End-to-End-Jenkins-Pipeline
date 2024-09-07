@@ -19,6 +19,7 @@ stages{
     url: 'https://github.com/KORLA2/End-to-End-Jenkins-Pipeline.git'
  
         }
+}
         stage('Build Image'){
           steps {
               sh" docker build -t goutham2/frontend:${BUILD_NUMBER} ."
@@ -51,4 +52,4 @@ stages{
 
     }
 }
-}
+
