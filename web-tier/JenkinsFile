@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'agent-1' }
     environment {
         DOCKER_HUB_CRED = 'docker-cred'
         GIT_HUB_CRED = 'githubtoken'
